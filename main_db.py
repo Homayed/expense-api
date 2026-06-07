@@ -1,8 +1,8 @@
+from fastapi import HTTPException
 from fastapi import FastAPI
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from pydantic import BaseModel
-
 
 
 app = FastAPI()
@@ -58,4 +58,21 @@ def add_expenses(expense:Expense):
     return {
         "message": "expense added successfully",
         "expense": dict(new_expense)
+    }
+
+@app.get("/expenses/{expense_id}")
+def get_expense_by_id(expense_id:int):
+    connection = get_connection()
+    cursor = connection.cursor(cursor_factory=RealDictCursor)
+    cursor.execute("""
+        SELECT * from expenses where id = %s;
+    """, (expense_id,))
+    expense = cursor.fetchone()
+    cursor.close()
+    connection.close()
+    if expense is None:
+        raise HTTPException(status_code=404,detail="expense not found")
+    return {
+        "message": "expense fetched from PostgreSQL",
+        "expense": dict(expense)
     }
