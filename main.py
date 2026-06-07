@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI,HTTPException
 from pydantic import BaseModel
 
 app = FastAPI()
@@ -57,9 +57,7 @@ def find_expense(expense_id:int):
                 "message": "expense shown successfully",
                 "expense": expense
             }
-    return {
-        "message": "no expense found",
-    }
+    raise HTTPException(status_code=404, detail= "expense not found")
 @app.put("/expenses/{expense_id}")
 def update_expense(expense_id:int, new_expense: Expense):
     for expense in expenses:
@@ -72,9 +70,7 @@ def update_expense(expense_id:int, new_expense: Expense):
                 "message": "expense updated successfully",
                 "expense": expense
             }
-    return {
-        "message": "no expense found",
-    }
+    raise HTTPException(status_code=404, detail="expense not found")
 
 @app.delete("/expenses/{expense_id}")
 def delete_expense(expense_id:int):
@@ -85,6 +81,4 @@ def delete_expense(expense_id:int):
                 "message": "expense deleted successfully",
                 "expense": expense
             }
-    return {
-        "message": "no expense found",
-    }
+    raise HTTPException(status_code=404, detail="expense not found")
