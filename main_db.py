@@ -4,6 +4,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from pydantic import BaseModel
 
+from db_test import connection
 
 app = FastAPI()
 class Expense(BaseModel):
@@ -74,5 +75,49 @@ def get_expense_by_id(expense_id:int):
         raise HTTPException(status_code=404,detail="expense not found")
     return {
         "message": "expense fetched from PostgreSQL",
+        "expense": dict(expense)
+    }
+
+@app.put("/expenses/{expense_id}")
+def update_expenses(expense_id: int, updated_expense: Expense):
+    connection = get_connection()
+    cursor = connection.cursor(cursor_factory=RealDictCursor)
+    cursor.execute("""
+        UPDATE expenses
+        SET title = %s,
+        amount = %s,
+        category = %s,
+        paid = %s 
+        WHERE id = %s
+        RETURNING *;
+        
+    """, (updated_expense.title, updated_expense.amount, updated_expense.category,updated_expense.paid,expense_id))
+
+    expense = cursor.fetchone()
+    connection.commit()
+    cursor.close()
+    connection.close()
+    if expense is None:
+        raise HTTPException(status_code=404,detail="expense not found")
+    return {
+        "message": "expense updated successfully",
+        "expense": dict(expense)
+    }
+@app.delete("/expenses/{expense_id}")
+def delete_expense(expense_id:int):
+    connection = get_connection()
+    cursor = connection.cursor(cursor_factory=RealDictCursor)
+    cursor.execute("""
+        DELETE from expenses where id = %s
+        RETURNING *;
+    """, (expense_id,))
+    expense = cursor.fetchone()
+    connection.commit()
+    cursor.close()
+    connection.close()
+    if expense is None:
+        raise HTTPException(status_code=404,detail="expense not found")
+    return {
+        "message": "expense deleted from PostgreSQL",
         "expense": dict(expense)
     }
