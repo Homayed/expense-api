@@ -18,10 +18,18 @@ expenses = []
 next_id = 1
 
 @app.get("/expenses")
-def expense():
+def get_expenses(category:str = None , paid:bool = None):
+    filtered_expenses = []
+    for expense in expenses:
+        if category is not None and expense["category"]!=category:
+            continue
+        if paid is not None and expense["paid"]!=paid:
+            continue
+        filtered_expenses.append(expense)
+
     return {
-        "message": "all expenses shown",
-        "expenses": expenses
+        "message": "expenses shown successfully",
+        "expenses": filtered_expenses
     }
 
 @app.post("/expenses")
